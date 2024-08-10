@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        body{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: rgb(22, 33, 44);
+        }
+        #table{
+            background-color: rgb(33, 44, 55);
+            display: inline-block;
+            width: 800px;
+            height: 500px;
+            border-radius: 4px;
+            position: absolute;
+            pointer-events: none;
+
+            box-shadow: 5px 5px 10px rgb(11, 22, 33);
+        }
+        #pingpong{
+            background-color: rgb(255, 255, 255);
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+        #redTap{
+            background-color: rgb(199, 35, 57);
+            display: inline-block;
+            width: 10px;
+            height: 100px;
+            border-radius: 5px;
+            position: absolute;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+        #blueTap{
+            background-color: rgb(29, 75, 202);
+            display: inline-block;
+            width: 10px;
+            height: 100px;
+            border-radius: 5px;
+            position: absolute;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+        #redHome{
+            background-color: rgb(199, 35, 57);
+            display: inline-block;
+            width: 3px;
+            height: 0px;
+            border-radius: 5px;
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+        }
+        #blueHome{
+            background-color: rgb(29, 75, 202);
+            display: inline-block;
+            width: 3px;
+            height: 0px;
+            border-radius: 5px;
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+        }
+        #redScore{
+            display: inline-block;
+            position: absolute;
+            pointer-events: none;
+            width: 47%;
+            height: 100%;
+            left: 50%;
+            text-align: left;
+            line-height: 50vh;
+            padding-left: 3%;
+            border-left: 2px solid rgba(44, 55, 66, 1);
+
+            font-size: 80px;
+            font-weight: 800;
+            color: rgba(199, 35, 57,.6);
+        }
+        #blueScore{
+            display: inline-block;
+            position: absolute;
+            pointer-events: none;
+            width: 47%;
+            height: 100%;
+            text-align: right;
+            line-height: 50vh;
+            padding-right: 3%;
+            border-right: 2px solid rgba(44, 55, 66, 1);
+
+            font-size: 80px;
+            font-weight: 800;
+            color: rgba(29, 75, 202,.6);
+        }
+        @keyframes redGetScore{
+            0%{
+                background-color: rgba(199, 35, 57,0);
+            }
+            10%{
+                background-color: rgba(199, 35, 57,.3);
+            }
+            100%{
+                background-color: rgba(199, 35, 57,0);
+            }
+        }
+        @keyframes blueGetScore{
+            0%{
+                background-color: rgba(199, 35, 57,0);
+            }
+            10%{
+                background-color: rgba(29, 75, 202,.3);
+            }
+            100%{
+                background-color: rgba(199, 35, 57,0);
+            }
+        }
+    </style> 
+</head>
+<body>
+    <div id="table">
+        <div id="pingpong"></div>
+        <div id="redTap"></div>
+        <div id="blueTap"></div>
+        <div id="redHome"></div>
+        <div id="blueHome"></div>
+        <div id="redScore">0</div>
+        <div id="blueScore">0</div>
+        
+    </div>
+    <script>
+        //设定
+        let ballRadius=4;
+        let tableWidth=800;
+        let tableHeight=500;
+        let tabWidth=100;
+        let hard=3;//blue的移动速度
+        let hard_r=3;//red的移动速度(如有)
+        let isPlayer=1;
+        //HTML链接
+        let pingpong=document.getElementById('pingpong');
+        let table=document.getElementById('table');
+        let red=document.getElementById('redTap');
+        let blue=document.getElementById('blueTap');
+        let redHome=document.getElementById('redHome');
+        let blueHome=document.getElementById('blueHome');
+        let redScore=document.getElementById('redScore');
+        let blueScore=document.getElementById('blueScore');
+        //球位置
+        let px=20;
+        let py=100;
+        //球速度
+        let v=3;
+        let vx=1;
+        let vy=1;
+        //球板位置
+        let ry=0;
+        let by=0;
+        //分数
+        let rs=0;
+        let bs=0;
+        //蓝方AI
+        let bv=0;
+        let rv=0;
+
+        Start();
+        setInterval("Update()","10")
+
+        document.addEventListener("mousemove",function(e)
+        {    
+            //red
+            if(isPlayer)
+            {
+                ry=e.offsetY-table.offsetTop;
+                if(ry<tabWidth/2)ry=tabWidth/2;
+                if(ry>tableHeight-tabWidth/2)ry=tableHeight-tabWidth/2;
+            }
+        })
+        document.addEventListener("touchmove",function(e)
+        {    
+            //red
+            if(isPlayer)
+            {
+                ry=e.targetTouches[0].pageY-table.offsetTop;
+                if(ry<tabWidth/2)ry=tabWidth/2;
+                if(ry>tableHeight-tabWidth/2)ry=tableHeight-tabWidth/2;
+            }
+            console.log(e.targetTouches[0].pageY);
+            
+        })
+        function Start()
+        {
+            table.style.width=tableWidth+"px";
+            table.style.height=tableHeight+"px";
+            red.style.height=tabWidth+"px";
+            blue.style.height=tabWidth+"px";
+            pingpong.style.width=ballRadius*2+"px";
+            pingpong.style.height=ballRadius*2+"px";
+            redHome.style.height=tableHeight+"px";
+            redHome.style.left=tableWidth+"px";
+            blueHome.style.height=tableHeight+"px";
+            red.style.top=tableHeight/2+"px";
+            blue.style.top=tableHeight/2+"px";
+
+        }
+        function Update()
+        {
+            //小球加速
+            v+=0.002;
+            //上下反弹
+            if(py<ballRadius)
+                vy=Math.abs(vy);
+            if(py>tableHeight-ballRadius)
+                vy=-Math.abs(vy);
+            //接住反弹
+            if(px>tableWidth-15-ballRadius&&IsGetBall(ry))
+            {
+                vx=-Math.abs(vx);
+                ChangeBallVel(ry);
+                px=tableWidth-15-ballRadius;
+                
+            }
+            if(px<15+ballRadius&&IsGetBall(by))
+            {
+                vx=Math.abs(vx);
+                ChangeBallVel(by);
+                px=15+ballRadius;
+            }
+            //越界重置得分
+            if(px>tableWidth-ballRadius)
+            {
+                bs++;
+                AddScoreAnimation(blueScore,"blueGetScore");
+                SetBall();
+            }
+            if(px<ballRadius)
+            {
+                rs++;
+                AddScoreAnimation(redScore,"redGetScore");
+                SetBall();       
+            }
+            //运动赋值
+            px+=vx*v;
+            py+=vy*v;
+            
+            //red&&blue AI
+            if(!isPlayer)
+            {
+                RedAI();
+            }
+            blueAI();
+
+            //show
+            Show();
+        }
+        //赋予画面
+        function AddScoreAnimation(Score,animation)
+        {
+            Score.style.animation=animation+" 0.3s linear";
+            setTimeout(()=>{
+                Score.style.animation="";
+            },300)
+        }
+        function Show()
+        {
+            pingpong.style.left=px+"px";
+            pingpong.style.top=py+"px";
+
+            red.style.left=tableWidth-10+"px";
+            red.style.top=ry+"px";
+            
+            blue.style.left=10+"px";
+            blue.style.top=by+"px";
+
+            redScore.innerText=rs;
+            blueScore.innerText=bs;
+        }
+        function RedAI()
+        {
+            //跟随球的动势
+            if(px>tableWidth-(tableWidth/1.7))
+            {
+                if(Math.abs(ry-py)<30)
+                    rv=0;
+                else if(ry<py)
+                    rv=1;
+                else if(ry>py)
+                    rv=-1;     
+            }
+            else rv=0
+            //比分差距大是调整难易度
+            if(bs-rs>=3)
+                hard_r=(bs-rs)/2+1.5;
+            else hard=3;
+            ry+=rv*hard_r; 
+            //避免越界
+            if(ry<tabWidth/2)ry=tabWidth/2;
+            if(ry>tableHeight-tabWidth/2)ry=tableHeight-tabWidth/2;
+        }
+        function blueAI()
+        {
+            //跟随球的动势
+            if(px<tableWidth/1.7)
+            {
+                if(Math.abs(by-py)<30)
+                    bv=0;
+                else if(by<py)
+                    bv=1;
+                else if(by>py)
+                    bv=-1;
+                
+            }
+            else bv=0
+            //比分差距大是调整难易度
+            if(rs-bs>=3)
+                hard=(rs-bs)/2+1.5;
+            else hard=3;   
+            by+=bv*hard; 
+            //避免越界
+            if(by<tabWidth/2)by=tabWidth/2;
+            if(by>tableHeight-tabWidth/2)by=tableHeight-tabWidth/2;
+        }
+        //是否接到了球
+        function IsGetBall(y)
+        {
+            if(py-y<(tabWidth/2)&&py-y>-(tabWidth/2))
+                 return true;
+            return false
+        }
+        //重置球
+        function SetBall()
+        {
+            v=0;
+            vx=0;
+            vy=0;
+            px=tableWidth/2;
+            py=tableHeight/2;
+            setTimeout(()=>
+            {
+                vx=GetBallVelX()
+                vy=GetBallVelY()
+                v=4
+            
+            },1000)
+        }
+        //获取球重置时的速度
+        function GetBallVelX()
+        {
+            let x=(Math.random()-0.5)*2;
+            if(Math.abs(x)<0.9)
+              x=GetBallVelX();
+            return x;
+
+        }
+        //同上
+        function GetBallVelY()
+        {
+            let y=(Math.random()-0.5)*2;
+            if(Math.abs(y)<0.1)
+              y=GetBallVelX();
+            return y;
+
+        }
+        //板接到球时改变球的运动轨迹
+        function ChangeBallVel(y)
+        {
+            let a=(y-py)/tabWidth*2;
+            
+            if(a>=0&&vy>0)
+                vy+=-Math.abs(vy)-0.5*Math.abs(a);
+            if(a<=0&&vy<0)
+                vy-=-Math.abs(vy)-0.5*Math.abs(a);
+        }
+    </script>
+</body>
+</html>
